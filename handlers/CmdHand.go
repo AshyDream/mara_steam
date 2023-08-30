@@ -16,7 +16,7 @@ func Register(name string, handlerFunc command) {
 }
 
 func HandleCommand(u *telego.Update, b *telego.Bot) {
-	text := trimFirstRune(u.Message.Text)
+	text := TrimFirstRune(u.Message.Text)
 	parts := strings.Fields(text)
 	if len(parts) == 0 {
 		return
@@ -36,7 +36,7 @@ func HandleCommand(u *telego.Update, b *telego.Bot) {
 	cmd(u, b)
 }
 
-func trimFirstRune(s string) string {
+func TrimFirstRune(s string) string {
 	_, i := utf8.DecodeRuneInString(s)
 	return s[i:]
 }
