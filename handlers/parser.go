@@ -24,12 +24,22 @@ func Parser(url string, u *telego.Update, b *telego.Bot) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//// Знаходимо елементи за їх CSS класами або іншими селекторами
+
 	gameTitle := doc.Find(".apphub_AppName").First().Text()
 	fmt.Println(gameTitle)
-	buyBlock := doc.Find(".game_purchase_action")
+
+	firstPurchaseBlock := doc.Find(".game_area_purchase_game").First()
+	//titleCheck := checkPurchaseBlock(firstPurchaseBlock)
+	//fmt.Println(titleCheck)
+
+	buyBlock := firstPurchaseBlock.Find(".game_purchase_action").First()
 	discBlock := buyBlock.Find(".discount_block.game_purchase_discount").First()
-	discBlockText := buyBlock.Text()
+	fmt.Println(discBlock.Text())
+	//discCheck := discBlock.Find(".game_purchase_action_bg").First()
+	//if len(discCheck.Nodes) > 1 {
+	//	return
+	//}
+	discBlockText := discBlock.Text()
 	if discBlockText != "" {
 		pricePct := discBlock.Find(".discount_pct").Text()
 		oldPrice := discBlock.Find(".discount_original_price").Text()
@@ -44,3 +54,7 @@ func Parser(url string, u *telego.Update, b *telego.Bot) {
 	}
 	fmt.Printf("No discount for %s right now", gameTitle)
 }
+
+//func checkPurchaseBlock(block *goquery.Selection) bool {
+//
+//}
