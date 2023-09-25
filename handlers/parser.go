@@ -49,10 +49,13 @@ func Parser(url string, u *telego.Update, b *telego.Bot) {
 			ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
 			Text:   mText,
 		}
-		b.SendMessage(&message)
+		_, err := b.SendMessage(&message)
+		if err != nil {
+			fmt.Printf("\033[31mparser.go l52 can't send a message")
+		}
 		return
 	}
-	fmt.Printf("No discount for %s right now", gameTitle)
+	fmt.Printf("\033[31mNo discount for %s right now\033[0m", gameTitle)
 }
 
 //func checkPurchaseBlock(block *goquery.Selection) bool {
