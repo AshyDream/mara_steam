@@ -7,7 +7,8 @@ import (
 )
 
 type Configuration struct {
-	Token string
+	Token    string
+	DBSource string
 }
 
 func Cfg() Configuration {
