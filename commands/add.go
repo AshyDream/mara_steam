@@ -14,6 +14,16 @@ func init() {
 		text := u.Message.Text
 		text = handlers.TrimFirstRune(text)
 		parts := strings.Fields(text)
+		//cc := "us"
+
+		if len(parts) < 2 {
+			message := telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
+				Text:   "Pls proceed argument",
+			}
+			b.SendMessage(&message)
+			return
+		}
 		url := parts[1]
 		urlExmpl := "https://store.steampowered.com/app/"
 
@@ -36,31 +46,30 @@ func init() {
 		}
 
 		handlers.Parser(url, u, b)
-
 	})
 }
 
 func isURLValid(url string) bool {
 	response, err := http.Get(url)
 	if err != nil {
-		log.Printf("Помилка HTTP запиту: %v", err)
+		log.Printf("Error HTTP fetch: %v", err)
 		return false
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		log.Printf("Недійсний статус код: %d", response.StatusCode)
+		log.Printf("Wrong Status CODE: %d", response.StatusCode)
 		return false
 	}
 
 	document, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
-		log.Printf("Помилка парсингу сторінки: %v", err)
+		log.Printf("Error parsing page: %v", err)
 		return false
 	}
 
 	if document.Find(".apphub_AppName").Length() == 0 {
-		log.Println("Елемент .apphub_AppName не знайдено, це може бути головна сторінка Steam")
+		log.Println("Can't find .apphub_AppName element, it might be Steam homepage")
 		return false
 	}
 
