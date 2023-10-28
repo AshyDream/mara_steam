@@ -13,6 +13,7 @@ import (
 var (
 	cfg      = handlers.Cfg()
 	botToken = cfg.Token
+	dbSource = cfg.DBSource
 )
 
 func main() {
@@ -29,6 +30,12 @@ func main() {
 	//}
 
 	commands.RegisterAllCommands()
+	err = InitDB()
+	if err != nil {
+		fmt.Printf("Error DB: %v", err)
+		return
+	}
+	ShowDB()
 
 	//fmt.Printf("Bot user: %+v\n", botUser)
 
