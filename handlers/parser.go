@@ -10,6 +10,8 @@ import (
 
 func Parser(url string, u *telego.Update, b *telego.Bot) {
 
+	url += "?l=english"
+
 	doc := fetch(url)
 
 	gameTitle := doc.Find(".apphub_AppName").First().Text()
@@ -24,28 +26,28 @@ func Parser(url string, u *telego.Update, b *telego.Bot) {
 	}
 
 	var gameInfo = map[string]map[string]string{
-		"UA": map[string]string{},
-		"US": map[string]string{},
-		"GE": map[string]string{},
-		"UK": map[string]string{},
-		"JP": map[string]string{},
-		"CA": map[string]string{},
-		"AU": map[string]string{},
-		"NZ": map[string]string{},
-		"NO": map[string]string{},
-		"CH": map[string]string{},
-		"TW": map[string]string{},
-		"AR": map[string]string{},
-		"BR": map[string]string{},
-		"ID": map[string]string{},
-		"KR": map[string]string{},
-		"MX": map[string]string{},
-		"PL": map[string]string{},
-		"EU": map[string]string{},
+		"UA": {},
+		"US": {},
+		"GE": {},
+		"UK": {},
+		"JP": {},
+		"CA": {},
+		"AU": {},
+		"NZ": {},
+		"NO": {},
+		"CH": {},
+		"TW": {},
+		"AR": {},
+		"BR": {},
+		"ID": {},
+		"KR": {},
+		"MX": {},
+		"PL": {},
+		"EU": {},
 	}
 
 	for key := range gameInfo {
-		nUrl := url + "?cc=" + key
+		nUrl := url + "&cc=" + key
 		fmt.Println(key)
 		doc := fetch(nUrl)
 		purchaseBox := doc.Find(".game_area_purchase").Find(".game_area_purchase_game")
