@@ -5,6 +5,7 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	"mara/commands"
+	"mara/dbQueries"
 	"mara/handlers"
 	"os"
 	"time"
@@ -14,6 +15,10 @@ var (
 	cfg      = handlers.Cfg()
 	botToken = cfg.Token
 	dbSource = cfg.DBSource
+	cmds     = []telego.BotCommand{
+		{Command: "start", Description: "Launch the bot"},
+		{Command: "add", Description: "Subscribe to game"},
+		{Command: "curr", Description: "Choose ur current currency"}}
 )
 
 func main() {
@@ -22,6 +27,8 @@ func main() {
 		fmt.Println("Error-starting: ", err)
 		os.Exit(1)
 	}
+	params := telego.SetMyCommandsParams{Commands: cmds}
+	err = bot.SetMyCommands(&params)
 
 	//botUser, err := bot.GetMe()
 	//if err != nil {
@@ -30,12 +37,12 @@ func main() {
 	//}
 
 	commands.RegisterAllCommands()
-	err = InitDB()
+	err = dbQueries.InitDB()
 	if err != nil {
 		fmt.Printf("Error DB: %v", err)
 		return
 	}
-	ShowDB()
+	dbQueries.ShowDB()
 
 	//fmt.Printf("Bot user: %+v\n", botUser)
 
