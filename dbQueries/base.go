@@ -1,14 +1,19 @@
-package main
+package dbQueries
 
 import (
 	"database/sql"
 	"fmt"
+	"mara/handlers"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var db *sql.DB
+var (
+	cfg      = handlers.Cfg()
+	dbSource = cfg.DBSource
+	db       *sql.DB
+)
 
 func InitDB() error {
 	dataSourceName := dbSource
@@ -48,11 +53,11 @@ func ShowDB() {
 			return
 		}
 		fmt.Println("\033[34m", tableName)
-		ShowTable(tableName)
+		showTable(tableName)
 	}
 }
 
-func ShowTable(name string) {
+func showTable(name string) {
 	fmt.Println("\033[33m===========================================")
 	fmt.Println("\033[33mField  Type NULL Key DefaultVal Extra")
 	rows, err := db.Query("DESCRIBE " + name)
