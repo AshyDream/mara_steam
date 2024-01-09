@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/mymmrac/telego"
+	"io"
 	"log"
 	"mara/dbQueries"
 	"mara/handlers"
@@ -108,7 +109,12 @@ func isURLValid(url string, cookies []*http.Cookie) (bool, string) {
 		log.Printf("Error HTTP fetch: %v", err)
 		return false, ""
 	}
-	defer response.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(response.Body)
 
 	if response.StatusCode != 200 {
 		log.Printf("Wrong Status CODE: %d", response.StatusCode)
