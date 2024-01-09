@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/mymmrac/telego"
 	"log"
+	"mara/utils"
 	"strings"
-	"unicode/utf8"
 )
 
 var Commands = make(map[string]command)
@@ -16,7 +16,7 @@ func Register(name string, handlerFunc command) {
 }
 
 func HandleCommand(u *telego.Update, b *telego.Bot) {
-	text := TrimFirstRune(u.Message.Text)
+	text := utils.TrimFirstRune(u.Message.Text)
 	parts := strings.Fields(text)
 	if len(parts) == 0 {
 		return
@@ -34,9 +34,4 @@ func HandleCommand(u *telego.Update, b *telego.Bot) {
 		return
 	}
 	cmd(u, b)
-}
-
-func TrimFirstRune(s string) string {
-	_, i := utf8.DecodeRuneInString(s)
-	return s[i:]
 }
