@@ -3,15 +3,14 @@ package dbQueries
 import (
 	"database/sql"
 	"fmt"
-	"mara/handlers"
+	"mara/utils"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
-	cfg      = handlers.Cfg()
-	dbSource = cfg.DBSource
+	dbSource = utils.DbSource
 	db       *sql.DB
 )
 

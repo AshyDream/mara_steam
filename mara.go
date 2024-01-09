@@ -7,18 +7,14 @@ import (
 	"mara/commands"
 	"mara/dbQueries"
 	"mara/handlers"
+	"mara/utils"
 	"os"
 	"time"
 )
 
 var (
-	cfg      = handlers.Cfg()
-	botToken = cfg.Token
-	dbSource = cfg.DBSource
-	cmds     = []telego.BotCommand{
-		{Command: "start", Description: "Launch the bot"},
-		{Command: "add", Description: "Subscribe to game"},
-		{Command: "curr", Description: "Choose ur current currency"}}
+	botToken = utils.BotToken
+	cmds     = utils.Cmds
 )
 
 func main() {
@@ -56,6 +52,10 @@ func main() {
 	bh.Handle(func(b *telego.Bot, u telego.Update) {
 		handlers.HandleCommand(&u, b)
 	}, th.AnyCommand())
+
+	bh.Handle(func(b *telego.Bot, u telego.Update) {
+		handlers.CallbackRoad(&u, b)
+	}, th.AnyCallbackQuery())
 
 	bh.Handle(func(bot *telego.Bot, u telego.Update) {
 		if u.Message.From.Username != "" {
