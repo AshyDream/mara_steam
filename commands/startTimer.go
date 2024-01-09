@@ -8,7 +8,9 @@ import (
 
 func init() {
 	handlers.Register("startTimer", func(u *telego.Update, b *telego.Bot) {
-		if u.Message.From.ID == int64(utils.Admin_id) {
+		tmpAdmin_id := utils.Admin_id
+		admin_id := utils.StringToInt(tmpAdmin_id)
+		if u.Message.From.ID == int64(admin_id) {
 			handlers.DayTimer(b)
 		}
 	})
