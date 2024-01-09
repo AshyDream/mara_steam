@@ -21,6 +21,9 @@ func init() {
 			ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
 			Text:   mtext,
 		}
-		b.SendMessage(&message)
+		_, err := b.SendMessage(&message)
+		if err != nil {
+			fmt.Println(err)
+		}
 	})
 }
