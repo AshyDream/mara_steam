@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/mymmrac/telego"
+	"io"
 	"log"
 	"mara/dbQueries"
 	"mara/utils"
 	"net/http"
+	"sync"
 )
 
-func Parser(url string, u *telego.Update, b *telego.Bot) {
+var wg sync.WaitGroup
+
+func Parser(url string, b *telego.Bot) {
 
 	url += "?l=english"
 
@@ -19,6 +23,7 @@ func Parser(url string, u *telego.Update, b *telego.Bot) {
 		{Name: "lastagecheckage", Value: "1-0-1983"},
 		{Name: "birthtime", Value: "407541601"},
 	}
+
 	doc := fetch(url, cookies)
 
 	gameTitle := doc.Find(".apphub_AppName").First().Text()
@@ -53,40 +58,28 @@ func Parser(url string, u *telego.Update, b *telego.Bot) {
 		"UA": {},
 		"US": {},
 		"GE": {},
-		//"UK": {},
-		//"JP": {},
-		//"CA": {},
-		//"AU": {},
-		//"NZ": {},
-		//"NO": {},
-		//"CH": {},
-		//"TW": {},
-		////"AR": {},
-		////"BR": {},
-		//"ID": {},
-		//"KR": {},
-		//"MX": {},
-		"PL": {},
-		//"EU": {},
+		//"PL": {},
 	}
 
 	for key := range gameInfo {
 		nUrl := url + "&cc=" + key
-		fmt.Println(key)
-		doc := fetch(nUrl, cookies)
+		key := key
+		wg.Add(1)
 		go func() {
-			info := gatherInfo(doc)
+			doc = fetch(nUrl, cookies)
+			info := gatherInfo(doc, gameTitle)
 			gameInfo[key]["pct"] = info[0]
 			gameInfo[key]["priceActl"] = info[1]
 			gameInfo[key]["priceDscnt"] = info[2]
+			gameInfo[key]["gameTitle"] = info[3]
+			wg.Done()
 		}()
 	}
-
-	fmt.Println(gameInfo)
-
+	wg.Wait()
+	DiscountMessageRoad(id, gameInfo, b)
 }
 
-func gatherInfo(doc *goquery.Document) []string {
+func gatherInfo(doc *goquery.Document, gameTitle string) []string {
 	purchaseBox := doc.Find(".game_area_purchase").Find(".game_area_purchase_game")
 
 	var gameBox goquery.Selection
@@ -95,19 +88,13 @@ func gatherInfo(doc *goquery.Document) []string {
 	} else {
 		gameBox = *purchaseBox.First().Find(".game_purchase_discount")
 	}
-	//gameName := gameBox.Find("h1").Text()
-	//fmt.Println(gameName)
 
 	gamePrices := gameBox.Find(".discount_prices").Children()
 	gameDscntPct := gameBox.Find(".discount_pct").Text()
 	gameActlPrice := gamePrices.First().Text()
 	gameDscntPrice := gamePrices.Next().Text()
 
-	//for i, box := range purchaseBox {
-	//	fmt.Printf("\033[3%vm %v", i+1, box.Attr)
-	//}
-
-	info := []string{gameDscntPct, gameActlPrice, gameDscntPrice}
+	info := []string{gameDscntPct, gameActlPrice, gameDscntPrice, gameTitle}
 	return info
 }
 
@@ -128,7 +115,12 @@ func fetch(url string, cookies []*http.Cookie) *goquery.Document {
 	if err != nil {
 		log.Printf("Error HTTP fetch: %v", err)
 	}
-	defer response.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(response.Body)
 
 	if response.StatusCode != 200 {
 		log.Printf("Wrong Status CODE: %d", response.StatusCode)
