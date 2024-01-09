@@ -48,8 +48,9 @@ func IdTrimer(s string) int {
 }
 
 func UrlBuilder(gameId int) string {
-	urlExmpl := "https://store.steampowered.com/app/"
-	return urlExmpl + string(gameId)
+	urlExmpl := `https://store.steampowered.com/app/`
+	url := urlExmpl + strconv.Itoa(gameId)
+	return url
 }
 
 func StringToInt(str string) int {
