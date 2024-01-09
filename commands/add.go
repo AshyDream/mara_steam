@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/mymmrac/telego"
 	"log"
@@ -23,8 +24,10 @@ func init() {
 				ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
 				Text:   "Pls proceed argument",
 			}
-			b.SendMessage(&message)
-			return
+			_, err := b.SendMessage(&message)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		url := parts[1]
 		cookies := []*http.Cookie{
@@ -50,8 +53,10 @@ func init() {
 				ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
 				Text:   "Invalid Steam game URL!",
 			}
-			b.SendMessage(&message)
-			return
+			_, err := b.SendMessage(&message)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		id := utils.IdTrimer(url)
@@ -76,7 +81,10 @@ func init() {
 			ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
 			Text:   mtext,
 		}
-		b.SendMessage(&message)
+		_, err := b.SendMessage(&message)
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		//handlers.Parser(url, u, b)
 	})
