@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/mymmrac/telego"
 	"mara/handlers"
 )
@@ -10,7 +11,7 @@ var (
 		{{Text: "\U0001F1FA\U0001F1E6", CallbackData: "UA"}},
 		{{Text: "\U0001F1FA\U0001F1F8", CallbackData: "US"}},
 		{{Text: "\U0001F1E9\U0001F1EA", CallbackData: "GE"}},
-		{{Text: "\U0001F1F5\U0001F1F1", CallbackData: "PL"}},
+		//{{Text: "\U0001F1F5\U0001F1F1", CallbackData: "PL"}},
 	}
 )
 
@@ -29,7 +30,10 @@ func init() {
 			ChatID:      telego.ChatID{ID: u.Message.Chat.ID},
 			ReplyMarkup: &keyboardMarkup,
 		}
-		b.SendMessage(&message)
+		_, err := b.SendMessage(&message)
+		if err != nil {
+			fmt.Println(err)
+		}
 
 	})
 }
