@@ -173,3 +173,101 @@ func List(userId int) map[int]int {
 
 	return games
 }
+
+func GetGamesGroup(lastId int, limit int) []map[string]interface{} {
+	var games []map[string]interface{}
+	var game map[string]interface{}
+	query := "SELECT * FROM Games WHERE Id>? LIMIT ?"
+	rows, err := db.Query(query, lastId, limit)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	values := make([]interface{}, len(columns))
+	valuePointers := make([]interface{}, len(columns))
+	for i := range columns {
+		valuePointers[i] = &values[i]
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(valuePointers...); err != nil {
+			fmt.Println(err)
+		}
+
+		game = make(map[string]interface{})
+		for i, colName := range columns {
+			val := values[i]
+			b, ok := val.([]byte)
+			if ok {
+				game[colName] = string(b)
+			} else {
+				game[colName] = val
+			}
+		}
+		games = append(games, game)
+	}
+	return games
+}
+
+func GetUserGroup(lastId int, limit int, gameId int) []map[string]interface{} {
+	var users []map[string]interface{}
+	var user map[string]interface{}
+	query := "SELECT * FROM Games_Users WHERE Game_id=? AND User_id>? LIMIT ?"
+	rows, err := db.Query(query, gameId, lastId, limit)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	values := make([]interface{}, len(columns))
+	valuePointers := make([]interface{}, len(columns))
+	for i := range columns {
+		valuePointers[i] = &values[i]
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(valuePointers...); err != nil {
+			fmt.Println(err)
+		}
+
+		user = make(map[string]interface{})
+		for i, colName := range columns {
+			val := values[i]
+			b, ok := val.([]byte)
+			if ok {
+				user[colName] = string(b)
+			} else {
+				user[colName] = val
+			}
+		}
+		users = append(users, user)
+	}
+	return users
+}
+
+func GetUserCurr(userId int) string {
+	var curr string
+	query := "SELECT Country_currency FROM Users WHERE Id=?"
+	row, err := db.Query(query, userId)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer row.Close()
+	if row.Next() {
+		if err := row.Scan(&curr); err != nil {
+			fmt.Println(err)
+		}
+	}
+	return curr
+}
