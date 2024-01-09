@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/mymmrac/telego"
 	"log"
 	"mara/utils"
@@ -30,7 +31,10 @@ func HandleCommand(u *telego.Update, b *telego.Bot) {
 			Text:   "Unknown command!",
 		}
 		log.Printf("Unknown command: %s", commandName)
-		b.SendMessage(&message)
+		_, err := b.SendMessage(&message)
+		if err != nil {
+			fmt.Println(err)
+		}
 		return
 	}
 	cmd(u, b)
