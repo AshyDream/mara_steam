@@ -3,6 +3,7 @@ package dbQueries
 import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 )
 
 func IsUser(id int) bool {
@@ -12,23 +13,22 @@ func IsUser(id int) bool {
 		fmt.Printf("Can't find user with id = %v: %v", id, err)
 		return false
 	}
-	if !exists {
-		return exists
-	}
 
-	var user map[string]interface{}
-	query := "SELECT * FROM Users WHERE Id = ?"
+	return exists
+}
+
+func GameInfo(id int) map[string]interface{} {
+	var game map[string]interface{}
+	query := "SELECT * FROM Games WHERE Id = ?"
 	rows, err := db.Query(query, id)
 	if err != nil {
 		fmt.Println(err)
-		return false
 	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
 	if err != nil {
 		fmt.Println(err)
-		return false
 	}
 
 	values := make([]interface{}, len(columns))
@@ -40,7 +40,45 @@ func IsUser(id int) bool {
 	if rows.Next() {
 		if err := rows.Scan(valuePointers...); err != nil {
 			fmt.Println(err)
-			return false
+		}
+
+		game = make(map[string]interface{})
+		for i, colName := range columns {
+			val := values[i]
+			b, ok := val.([]byte)
+			if ok {
+				game[colName] = string(b)
+			} else {
+				game[colName] = val
+			}
+		}
+	}
+	return game
+}
+
+func UserInfo(id int) {
+	var user map[string]interface{}
+	query := "SELECT * FROM Users WHERE Id = ?"
+	rows, err := db.Query(query, id)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	values := make([]interface{}, len(columns))
+	valuePointers := make([]interface{}, len(columns))
+	for i := range columns {
+		valuePointers[i] = &values[i]
+	}
+
+	if rows.Next() {
+		if err := rows.Scan(valuePointers...); err != nil {
+			fmt.Println(err)
 		}
 
 		user = make(map[string]interface{})
@@ -56,6 +94,82 @@ func IsUser(id int) bool {
 	}
 
 	fmt.Println(user)
+}
+
+func IsGame(id int) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT * FROM Games WHERE Id = ?)", id).Scan(&exists)
+	if err != nil {
+		fmt.Printf("Can't find user with id = %v: %v", id, err)
+		return false
+	}
 
 	return exists
+}
+
+func IsData(userId int, gameId int) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM Games_Users WHERE (User_id, Game_id) = (?,?))", userId, gameId).Scan(&exists)
+	if err != nil {
+		fmt.Println(err)
+		return true
+	}
+
+	return exists
+}
+
+func OnSale(gameId int) bool {
+	row, err := db.Query("SELECT OnSale FROM Games WHERE Id = ?", gameId)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(row)
+
+	defer row.Close()
+
+	onSale := make([]int, 0)
+	for row.Next() {
+		var val int
+		if err := row.Scan(&val); err != nil {
+			log.Fatal(err)
+		}
+		onSale = append(onSale, val)
+	}
+	if err := row.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	on := onSale[0]
+
+	if on == 0 {
+		return false
+	} else {
+		return true
+	}
+}
+
+func List(userId int) map[int]int {
+	var games map[int]int
+	query := "SELECT id, Game_id, User_id FROM Games_Users WHERE User_id = ?"
+	rows, err := db.Query(query, userId)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id, gameID, userID int
+		err := rows.Scan(&id, &gameID, &userID)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if games == nil {
+			games = make(map[int]int)
+		}
+
+		games[id] = gameID
+	}
+
+	return games
 }
