@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/mymmrac/telego"
 	"log"
+	"mara/utils"
 	"strings"
-	"unicode/utf8"
 )
 
 var Commands = make(map[string]command)
@@ -16,7 +17,7 @@ func Register(name string, handlerFunc command) {
 }
 
 func HandleCommand(u *telego.Update, b *telego.Bot) {
-	text := TrimFirstRune(u.Message.Text)
+	text := utils.TrimFirstRune(u.Message.Text)
 	parts := strings.Fields(text)
 	if len(parts) == 0 {
 		return
@@ -30,13 +31,11 @@ func HandleCommand(u *telego.Update, b *telego.Bot) {
 			Text:   "Unknown command!",
 		}
 		log.Printf("Unknown command: %s", commandName)
-		b.SendMessage(&message)
+		_, err := b.SendMessage(&message)
+		if err != nil {
+			fmt.Println(err)
+		}
 		return
 	}
 	cmd(u, b)
-}
-
-func TrimFirstRune(s string) string {
-	_, i := utf8.DecodeRuneInString(s)
-	return s[i:]
 }

@@ -5,14 +5,16 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	"mara/commands"
+	"mara/dbQueries"
 	"mara/handlers"
+	"mara/utils"
 	"os"
 	"time"
 )
 
 var (
-	cfg      = handlers.Cfg()
-	botToken = cfg.Token
+	botToken = utils.BotToken
+	cmds     = utils.Cmds
 )
 
 func main() {
@@ -21,6 +23,8 @@ func main() {
 		fmt.Println("Error-starting: ", err)
 		os.Exit(1)
 	}
+	params := telego.SetMyCommandsParams{Commands: cmds}
+	err = bot.SetMyCommands(&params)
 
 	//botUser, err := bot.GetMe()
 	//if err != nil {
@@ -29,6 +33,12 @@ func main() {
 	//}
 
 	commands.RegisterAllCommands()
+	err = dbQueries.InitDB()
+	if err != nil {
+		fmt.Printf("Error DB: %v", err)
+		return
+	}
+	dbQueries.ShowDB()
 
 	//fmt.Printf("Bot user: %+v\n", botUser)
 
@@ -42,6 +52,10 @@ func main() {
 	bh.Handle(func(b *telego.Bot, u telego.Update) {
 		handlers.HandleCommand(&u, b)
 	}, th.AnyCommand())
+
+	bh.Handle(func(b *telego.Bot, u telego.Update) {
+		handlers.CallbackRoad(&u, b)
+	}, th.AnyCallbackQuery())
 
 	bh.Handle(func(bot *telego.Bot, u telego.Update) {
 		if u.Message.From.Username != "" {
