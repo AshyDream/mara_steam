@@ -14,11 +14,12 @@ func TrimFirstRune(s string) string {
 
 func IdTrimer(s string) int {
 	pathSegments := strings.Split(s, "/")
-
+	var idIndex int
 	appIndex := -1
 	for i, segment := range pathSegments {
 		if segment == "app" && i+1 < len(pathSegments) {
 			appIndex = i + 1
+			idIndex = appIndex
 			break
 		}
 	}
@@ -30,7 +31,7 @@ func IdTrimer(s string) int {
 
 	var result strings.Builder
 
-	for _, char := range s {
+	for _, char := range pathSegments[idIndex] {
 		if char >= '0' && char <= '9' {
 			result.WriteRune(char)
 		}
