@@ -9,10 +9,12 @@ import (
 	"mara/handlers"
 	"mara/utils"
 	"os"
+	"sync"
 	"time"
 )
 
 var (
+	wg       sync.WaitGroup
 	botToken = utils.BotToken
 	cmds     = utils.Cmds
 )
@@ -54,7 +56,12 @@ func main() {
 	}, th.AnyCommand())
 
 	bh.Handle(func(b *telego.Bot, u telego.Update) {
-		handlers.CallbackRoad(&u, b)
+		wg.Add(1)
+		go func() {
+			handlers.CallbackRoad(&u, b)
+			wg.Done()
+		}()
+		wg.Wait()
 	}, th.AnyCallbackQuery())
 
 	bh.Handle(func(bot *telego.Bot, u telego.Update) {
