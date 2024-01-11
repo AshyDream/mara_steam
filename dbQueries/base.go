@@ -22,10 +22,9 @@ func InitDB() error {
 		return err
 	}
 
-	// Встановлення параметрів з'єднання
-	db.SetMaxOpenConns(5)                  // Максимальна кількість відкритих з'єднань
-	db.SetMaxIdleConns(0)                  // Максимальна кількість неактивних з'єднань у пулі
-	db.SetConnMaxLifetime(3 * time.Minute) // Максимальний час життя з'єднання
+	db.SetMaxOpenConns(0)
+	db.SetMaxIdleConns(0)
+	db.SetConnMaxLifetime(1 * time.Minute)
 
 	err = db.Ping()
 	if err != nil {
