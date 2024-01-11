@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	currCBs = []string{"UA", "US", "GE", "PL"}
+	currCBs = []string{"UA", "US", "GE"}
 )
 
 func CallbackRoad(u *telego.Update, b *telego.Bot) {
