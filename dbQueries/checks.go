@@ -1,6 +1,7 @@
 package dbQueries
 
 import (
+	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
@@ -63,7 +64,9 @@ func UserInfo(id int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		_ = rows.Close()
+	}(rows)
 
 	columns, err := rows.Columns()
 	if err != nil {
