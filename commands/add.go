@@ -44,11 +44,14 @@ func init() {
 				ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
 				Text:   "Wrong arguments!",
 			}
-			b.SendMessage(&message)
+			_, err := b.SendMessage(&message)
+			if err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 
-		is, title, isFree, isOnSale, isNotYet := isURLValid(url, cookies)
+		doc, is, title, isFree, onSale, isNotYet := isURLValid(url, cookies)
 
 		if !is {
 			message := telego.SendMessageParams{
@@ -85,16 +88,6 @@ func init() {
 			return
 		}
 
-		if isOnSale {
-			message := telego.SendMessageParams{
-				ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
-				Text:   "Game already on sale.",
-			}
-			_, err := b.SendMessage(&message)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}
 		id := utils.IdTrimer(url)
 		var (
 			mb    bool
@@ -107,10 +100,30 @@ func init() {
 			mb = dbQueries.UserToGame(*u, id)
 		}
 
+		var discCheck string
+
+		discCheck, onSale = isOnSale(doc, url)
+
 		if mb {
 			mtext = "The Game was successfully added to ur list! You will be alerted about next sale!"
+			if dbCheck(discCheck, id) {
+				onSale = true
+			} else {
+				onSale = false
+			}
 		} else {
 			mtext = "Game already in ur list!"
+		}
+
+		if onSale {
+			message := telego.SendMessageParams{
+				ChatID: telego.ChatID{ID: u.Message.Chat.ID, Username: u.Message.From.Username},
+				Text:   "Game already on sale.",
+			}
+			_, err := b.SendMessage(&message)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 
 		message := telego.SendMessageParams{
@@ -125,13 +138,14 @@ func init() {
 	})
 }
 
-func isURLValid(url string, cookies []*http.Cookie) (bool, string, bool, bool, bool) {
+func isURLValid(url string, cookies []*http.Cookie) (goquery.Document, bool, string, bool, bool, bool) {
 	client := &http.Client{}
+	var doc goquery.Document
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("Error creating HTTP request: %v", err)
-		return false, "", false, false, false
+		return doc, false, "", false, false, false
 	}
 
 	for _, cookie := range cookies {
@@ -141,7 +155,7 @@ func isURLValid(url string, cookies []*http.Cookie) (bool, string, bool, bool, b
 	response, err := client.Do(req)
 	if err != nil {
 		log.Printf("Error HTTP fetch: %v", err)
-		return false, "", false, false, false
+		return doc, false, "", false, false, false
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -152,26 +166,26 @@ func isURLValid(url string, cookies []*http.Cookie) (bool, string, bool, bool, b
 
 	if response.StatusCode != 200 {
 		log.Printf("Wrong Status CODE: %d", response.StatusCode)
-		return false, "", false, false, false
+		return doc, false, "", false, false, false
 	}
 
 	document, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
 		log.Printf("Error parsing page: %v", err)
-		return false, "", false, false, false
+		return doc, false, "", false, false, false
 	}
 
 	title := document.Find(".apphub_AppName").First().Text()
 
 	if document.Find(".apphub_AppName").Length() == 0 {
 		log.Println("Can't find .apphub_AppName element, it might be Steam homepage")
-		return false, "", false, false, false
+		return *document, false, "", false, false, false
 	}
 
 	purchaseBox := document.Find(".game_area_purchase").Find(".game_area_purchase_game")
 	wishlistBox := document.Find(".wishlist_add_reminder").Text()
 	if purchaseBox.Text() == "" && wishlistBox != "" {
-		return true, title, false, false, true
+		return *document, true, title, false, false, true
 	}
 
 	var gameBox goquery.Selection
@@ -186,17 +200,19 @@ func isURLValid(url string, cookies []*http.Cookie) (bool, string, bool, bool, b
 
 	if isFree == "Free to Play" {
 		log.Println("Game must be free")
-		return true, title, true, false, false
+		return *document, true, title, true, false, false
 	}
 
-	if isOnSale(*document, url) {
-		return true, title, false, true, false
+	_, onSale := isOnSale(*document, url)
+
+	if onSale {
+		return *document, true, title, false, true, false
 	}
 
-	return true, title, false, false, false
+	return *document, true, title, false, false, false
 }
 
-func isOnSale(doc goquery.Document, url string) bool {
+func isOnSale(doc goquery.Document, url string) (string, bool) {
 	var discCheck string
 
 	purchaseBox := doc.Find(".game_area_purchase").Find(".game_area_purchase_game")
@@ -209,6 +225,18 @@ func isOnSale(doc goquery.Document, url string) bool {
 
 	id := utils.IdTrimer(url)
 
+	if dbQueries.IsGame(id) {
+		if dbCheck(discCheck, id) {
+			return discCheck, true
+		} else {
+			return discCheck, false
+		}
+	}
+
+	return discCheck, false
+}
+
+func dbCheck(discCheck string, id int) bool {
 	if dbQueries.OnSale(id) {
 		if discCheck == "" {
 			dbQueries.OnSaleChanger(1, id)
